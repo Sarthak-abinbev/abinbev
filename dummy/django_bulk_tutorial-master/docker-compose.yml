@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db_bulk:
+    image: postgres
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+  db_init:
+    build:
+        context: .
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    environment:
+      - DJANGO_ENV=env
+    command: bash setup_server.sh
+    depends_on:
+      - db_bulk
+  app:
+    build:
+      context: .
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    environment:
+      - DJANGO_ENV=django
+    command: py.test --durations=20 -vvv
+    depends_on:
+      - db_bulk
+      - db_init
